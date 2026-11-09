@@ -3,15 +3,16 @@
 This branch starts at upstream `v0.10.0`, commit
 `135d09dd8b29f321f1725920d434864c4e512378`. It carries the existing
 Zegra descriptor-lifetime backports, select-range guards, and macOS kqueue
-reactor with their regression sources. Production Rust changes are identical
-to `Derekbenj/zegra` commit `2c716a083aade351f9a66cbf99e3de01d0a8abe3`,
-`vendor/patches/iceoryx2-0.10.0/series`. Workspace path dependencies connect all
+reactor with their regression sources. The original production Rust changes were transplanted from `Derekbenj/zegra` commit `2c716a083aade351f9a66cbf99e3de01d0a8abe3`,
+`vendor/patches/iceoryx2-0.10.0/series`. A follow-up uses upstream cell aliases and test atomic wrappers to satisfy the
+upstream Clippy policy, preserving normal-build behavior.
+Workspace path dependencies connect all
 iceoryx2 crates; consuming applications need no `[patch]` entries.
 
 The first two changes backport upstream PRs 2083 and 2102. The select guards
 and macOS reactor are local fixes. Zegra records the original archive checksums,
 ordered patch series, provenance, and platform evidence. The additional manifest
-changes declare CAL's macOS PAL dependency and the regression tests' dependencies.
+changes declare CAL's macOS PAL dependencies and the regression tests' dependencies.
 
 Run the focused regressions from this repository with native local IPC access:
 

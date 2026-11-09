@@ -14,8 +14,8 @@ use iceoryx2_bb_posix::{
     file_descriptor_set::SynchronousMultiplexing,
 };
 use iceoryx2_cal::reactor::{Reactor, ReactorAttachError, ReactorBuilder, ReactorWaitError};
+use iceoryx2_pal_concurrency_sync::cell::RefCell;
 use std::{
-    cell::RefCell,
     fs::File,
     os::{fd::AsRawFd, unix::net::UnixDatagram},
     process::Command,

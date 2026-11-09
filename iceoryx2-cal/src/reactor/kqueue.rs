@@ -3,16 +3,12 @@
 
 use crate::reactor::{ReactorAttachError, ReactorCreateError, ReactorWaitError};
 use alloc::vec::Vec;
-use core::{
-    cell::{Cell, RefCell},
-    fmt::Debug,
-    ptr,
-    time::Duration,
-};
+use core::{fmt::Debug, ptr, time::Duration};
 use iceoryx2_bb_posix::{
     file_descriptor::FileDescriptor, file_descriptor_set::SynchronousMultiplexing,
 };
 use iceoryx2_log::warn;
+use iceoryx2_pal_concurrency_sync::cell::{Cell, RefCell};
 use iceoryx2_pal_posix::posix::{self, errno::Errno};
 
 const CAPACITY: usize = 1024;

@@ -19,7 +19,7 @@ use iceoryx2_cal::{
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 fn name() -> FileName {
-    static SEQUENCE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
     FileName::new(
         format!(
             "fd-backport-{}-{}-{}",
@@ -28,7 +28,7 @@ fn name() -> FileName {
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_nanos(),
-            SEQUENCE.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+            SEQUENCE.fetch_add(1, Ordering::Relaxed)
         )
         .as_bytes(),
     )

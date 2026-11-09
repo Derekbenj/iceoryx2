@@ -62,4 +62,5 @@ path = "tests/tests.rs"
 harness = false
 
 [target.'cfg(target_os = "macos")'.dependencies]
+iceoryx2-pal-concurrency-sync = { workspace = true }
 iceoryx2-pal-posix = { workspace = true }
