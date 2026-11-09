@@ -44,6 +44,8 @@ tiny-fn = { workspace = true }
 serde = { workspace = true }
 
 [dev-dependencies]
+libc = { workspace = true }
+iceoryx2-cal = { workspace = true, features = ["std"] }
 iceoryx2-bb-posix-tests-common = { workspace = true, features = ["std"] }
 iceoryx2-bb-loggers = { workspace = true, features = ["std"] }
 iceoryx2-bb-testing = { workspace = true, features = ["std"] }
