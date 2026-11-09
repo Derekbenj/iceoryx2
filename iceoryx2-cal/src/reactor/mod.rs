@@ -12,6 +12,8 @@
 
 #[cfg(target_os = "linux")]
 pub mod epoll;
+#[cfg(target_os = "macos")]
+pub mod kqueue;
 pub mod posix_select;
 pub mod recommended;
 

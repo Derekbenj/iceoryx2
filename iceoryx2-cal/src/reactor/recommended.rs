@@ -16,7 +16,10 @@
 #[cfg(target_os = "linux")]
 pub type Ipc = crate::reactor::epoll::Epoll;
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "macos")]
+pub type Ipc = crate::reactor::kqueue::Reactor;
+
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 pub type Ipc = crate::reactor::posix_select::Reactor;
 
 /// Provides the recommended process-local
@@ -25,5 +28,8 @@ pub type Ipc = crate::reactor::posix_select::Reactor;
 #[cfg(target_os = "linux")]
 pub type Local = crate::reactor::epoll::Epoll;
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "macos")]
+pub type Local = crate::reactor::kqueue::Reactor;
+
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 pub type Local = crate::reactor::posix_select::Reactor;
