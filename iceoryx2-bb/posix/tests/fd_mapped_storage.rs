@@ -1,6 +1,7 @@
 // Focused adaptations of PR 2102 tests; SPDX-License-Identifier: Apache-2.0 OR MIT
 extern crate iceoryx2_bb_loggers;
 
+use iceoryx2_bb_concurrency::atomic::{AtomicU64, Ordering};
 use iceoryx2_bb_container::semantic_string::SemanticString;
 use iceoryx2_bb_elementary_traits::testing::abandonable::Abandonable;
 use iceoryx2_bb_posix::shared_memory::{
@@ -10,7 +11,7 @@ use iceoryx2_bb_system_types::file_name::FileName;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn name() -> FileName {
-    static SEQUENCE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
     FileName::new(
         format!(
             "fd-mapped-{}-{}-{}",
@@ -19,7 +20,7 @@ fn name() -> FileName {
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_nanos(),
-            SEQUENCE.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+            SEQUENCE.fetch_add(1, Ordering::Relaxed)
         )
         .as_bytes(),
     )
