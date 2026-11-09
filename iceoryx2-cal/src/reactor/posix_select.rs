@@ -126,6 +126,10 @@ impl crate::reactor::Reactor for Reactor {
                 fail!(from self, with ReactorAttachError::AlreadyAttached,
                         "{msg} since it is already attached.");
             }
+            Err(FileDescriptorSetAddError::FileDescriptorOutOfRange) => {
+                fail!(from self, with ReactorAttachError::InsufficientResources,
+                        "{msg} since its numeric file descriptor is outside the range supported by select.");
+            }
         }
     }
 

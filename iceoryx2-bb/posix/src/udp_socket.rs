@@ -66,7 +66,7 @@ use iceoryx2_bb_concurrency::atomic::Ordering;
 use iceoryx2_bb_elementary::enum_gen;
 use iceoryx2_bb_system_types::ipv4_address::{self, Ipv4Address};
 use iceoryx2_bb_system_types::port::{self, Port};
-use iceoryx2_log::{fail, fatal_panic, trace};
+use iceoryx2_log::{fail, trace};
 use iceoryx2_pal_posix::posix::{self, MemZeroedStruct};
 use iceoryx2_pal_posix::posix::{Errno, SockAddrIn};
 
@@ -295,8 +295,9 @@ impl UdpClient {
             "{} since the socket could not activate the blocking mode.", msg);
 
         let fd_set = FileDescriptorSet::new();
-        let _guard = fatal_panic!(from self, when fd_set.add(&self.socket),
-                            "This should never happen! {} since the socket could not be attached to a fd set.", msg);
+        let _guard = fail!(from self, when fd_set.add(&self.socket),
+            with UdpReceiveError::InsufficientResources,
+            "{} since the socket could not be attached to a fd set.", msg);
 
         let mut received_bytes = Ok(0);
         let receive_call = |_: &FileDescriptor| {
@@ -496,8 +497,9 @@ impl UdpServer {
             "{} since the socket could not activate the blocking mode.", msg);
 
         let fd_set = FileDescriptorSet::new();
-        let _guard = fatal_panic!(from self, when fd_set.add(&self.socket),
-                            "This should never happen! {} since the socket could not be attached to a fd set.", msg);
+        let _guard = fail!(from self, when fd_set.add(&self.socket),
+            with UdpReceiveError::InsufficientResources,
+            "{} since the socket could not be attached to a fd set.", msg);
 
         let mut received_bytes = Ok(None);
         match fd_set.timed_wait(timeout, FileEvent::Read, |_| {

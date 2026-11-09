@@ -75,7 +75,8 @@ enum_gen! { FileDescriptorSetWaitError
 enum_gen! { FileDescriptorSetAddError
   entry:
     AlreadyAttached,
-    CapacityExceeded
+    CapacityExceeded,
+    FileDescriptorOutOfRange
 }
 
 /// Defines the event type one wants to wait on in
@@ -161,6 +162,11 @@ impl FileDescriptorSet {
         FileDescriptorSet::default()
     }
 
+    fn is_fd_in_range(value: i32) -> bool {
+        // Windows uses an array of handles; POSIX sets index a fixed-size bitmask.
+        value >= 0 && (cfg!(target_os = "windows") || (value as usize) < posix::FD_SETSIZE)
+    }
+
     /// Adds a file descriptor
     pub fn add<'set, 'fd, F: SynchronousMultiplexing + ?Sized>(
         &'set self,
@@ -178,6 +184,12 @@ impl FileDescriptorSet {
             fail!(from self, with FileDescriptorSetAddError::CapacityExceeded,
                 "{msg} {:?} since the amount of file descriptors {} exceeds the maximum supported amount of file descriptors for a set {}.",
                 fd.file_descriptor(), self.internals().file_descriptors.len(), Self::capacity());
+        }
+
+        let raw_fd = unsafe { fd.native_handle() };
+        if !Self::is_fd_in_range(raw_fd) {
+            fail!(from self, with FileDescriptorSetAddError::FileDescriptorOutOfRange,
+                "{msg} {:?} since its numeric value is outside the range supported by select.", fd);
         }
 
         if self.contains_impl(fd) {
@@ -203,6 +215,9 @@ impl FileDescriptorSet {
     }
 
     fn remove(&self, value: i32) {
+        if !Self::is_fd_in_range(value) {
+            return;
+        }
         unsafe { posix::FD_CLR(value, &mut self.internals_mut().fd_set) };
 
         if self.internals_mut().max_fd == value + 1 {
@@ -233,12 +248,14 @@ impl FileDescriptorSet {
     }
 
     /// Returns true if the object is attached to the [`FileDescriptorSet`], otherwise false.
+    /// Descriptors outside the numeric range supported by select are never attached.
     pub fn contains<T: SynchronousMultiplexing>(&self, fd: &T) -> bool {
         self.contains_impl(fd.file_descriptor())
     }
 
     fn contains_impl(&self, fd: &FileDescriptor) -> bool {
-        unsafe { posix::FD_ISSET(fd.native_handle(), &self.internals().fd_set) }
+        let value = unsafe { fd.native_handle() };
+        Self::is_fd_in_range(value) && unsafe { posix::FD_ISSET(value, &self.internals().fd_set) }
     }
 
     /// Blocks until the specified event has occurred. It
@@ -317,12 +334,37 @@ impl FileDescriptorSet {
         }
 
         for raw_fd in &self.internals().file_descriptors {
-            if unsafe { posix::FD_ISSET(*raw_fd, &fd_set) } {
+            if Self::is_fd_in_range(*raw_fd) && unsafe { posix::FD_ISSET(*raw_fd, &fd_set) } {
                 let fd = FileDescriptor::non_owning_new(*raw_fd).unwrap();
                 fd_callback(&fd);
             }
         }
 
         Ok(number_of_notifications as _)
+    }
+}
+
+#[cfg(test)]
+mod numeric_range_tests {
+    use super::FileDescriptorSet;
+
+    #[test]
+    fn negative_values_are_out_of_range_and_removal_is_harmless() {
+        let set = FileDescriptorSet::new();
+        for value in [i32::MIN, -1] {
+            assert!(!FileDescriptorSet::is_fd_in_range(value));
+            set.remove(value);
+            assert!(set.is_empty());
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn numeric_boundary_is_independent_of_attachment_count() {
+        let capacity = FileDescriptorSet::capacity() as i32;
+        assert!(FileDescriptorSet::is_fd_in_range(capacity - 1));
+        for value in [capacity, capacity + 76, capacity * 2] {
+            assert!(!FileDescriptorSet::is_fd_in_range(value));
+        }
     }
 }
