@@ -432,30 +432,18 @@ impl<
     ) -> Result<u64, ListenerWaitError> {
         let mgmt = self.storage.get();
 
-        let mut drain = || -> Result<u64, ListenerWaitError> {
-            fail!(from self, when self.waiter.empty_buffer(),
-                "{msg} since the wait buffer could not be emptied.");
-            Ok(self.storage.get().event.drain(&mut callback))
-        };
-
-        if mgmt
-            .notification_state
-            .compare_exchange(
-                NOTIFICATION_STATE_NOTIFIED,
-                NOTIFICATION_STATE_IDLE,
-                Ordering::SeqCst,
-                Ordering::SeqCst,
-            )
-            .is_ok()
-        {
-            return drain();
+        if mgmt.notification_state.load(Ordering::SeqCst) != NOTIFICATION_STATE_NOTIFIED {
+            fail!(from self, when wait_call(),
+                "{msg} since the underlying wait call failed.");
         }
 
-        fail!(from self, when wait_call(),
-            "{msg} since the underlying wait call failed.");
+        fail!(from self, when self.waiter.empty_buffer(),
+            "{msg} since the wait buffer could not be emptied.");
+        // Re-arm only after consuming wake bytes. Earlier notifications are
+        // included in the event drain below; later ones retain their own wakeup.
         mgmt.notification_state
             .store(NOTIFICATION_STATE_IDLE, Ordering::SeqCst);
-        drain()
+        Ok(mgmt.event.drain(&mut callback))
     }
 }
 
