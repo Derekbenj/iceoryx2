@@ -61,6 +61,10 @@ name = "iceoryx2-cal-tests"
 path = "tests/tests.rs"
 harness = false
 
+[[test]]
+name = "event_wakeup"
+path = "tests/event_wakeup.rs"
+
 [target.'cfg(target_os = "macos")'.dependencies]
 iceoryx2-pal-concurrency-sync = { workspace = true }
 iceoryx2-pal-posix = { workspace = true }
